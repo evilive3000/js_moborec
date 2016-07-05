@@ -1,0 +1,16 @@
+{
+  "name": "moborec",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "evilive",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^4.1.5",
+    "mongodb": "^2.1.18",
+    "restify": "^4.1.1"
+  }
+}
