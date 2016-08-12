@@ -10,3 +10,4 @@ services:
 
     extra_hosts:
       - "mongo:192.168.0.184"
+      - "redis:192.168.0.184"
