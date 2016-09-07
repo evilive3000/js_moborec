@@ -1,13 +1,11 @@
 "use strict";
 
+const devMode = process.env.DEV || false;
+const config = require(`./config.json`)[devMode?'dev':'prod'];
+
 const validator = require('./validation').validator;
 
-var client = require("redis").createClient({
-  host: "redis",
-  db: 4,
-  detect_buffers: true
-  // prefix: "recom-"
-});
+const client = require("redis").createClient(config.redis);
 
 const Provider = require('./provider/data');
 const provider = new Provider(client);
@@ -83,7 +81,7 @@ server.post('/event', (req, res, next) => {
 });
 
 provider.start().then(() => {
-  server.listen(8084, () => {
+  server.listen(config.app.port, () => {
     console.log('%s listening at %s', server.name, server.url);
   });
 }).catch(e => console.log(e));

@@ -5,10 +5,11 @@ const mongo = require('mongodb');
 const MongoClient = mongo.MongoClient;
 const ObjectId = mongo.ObjectID;
 
-const redis = require("redis"),
-  client = redis.createClient({host: "redis", db: 4, detect_buffers: true});
+const devMode = process.env.DEV || false;
+const config = require(`./config.json`)[devMode?'dev':'prod'];
 
-// client.flushdb();
+const redis = require("redis"),
+  client = redis.createClient(config.redis);
 
 const Provider = require('./provider/data');
 const Adviser = require('./adviser');

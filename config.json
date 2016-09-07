@@ -1,0 +1,29 @@
+{
+  "prod": {
+    "redis": {
+      "host": "127.0.0.1",
+      "db": 4,
+      "detect_buffers": true
+    },
+    "app": {
+      "port": 8084
+    },
+    "cache": {
+      "lenLRU": 50000
+    }
+  },
+
+  "dev": {
+    "redis": {
+      "host": "redis",
+      "db": 4,
+      "detect_buffers": true
+    },
+    "app": {
+      "port": 8084
+    },
+    "cache": {
+      "lenLRU": 50000
+    }
+  }
+}

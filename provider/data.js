@@ -1,8 +1,10 @@
 "use strict";
 
+const devMode = process.env.DEV || false;
+const config = require(`../config.json`)[devMode?'dev':'prod'];
+
 const CacheProvider = require('./cache');
 const CacheLRU = require('cache-lru');
-const co = require('co');
 const _ = require('lodash');
 const events = require('./../event_types');
 const eventIndex = {};
@@ -12,7 +14,7 @@ for (let key in events) {
 }
 
 const cache = new CacheLRU();
-cache.limit(50000);
+cache.limit(config.cache.lenLRU);
 
 /**
  *
