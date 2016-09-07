@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^4.1.5",
+    "cache-lru": "^1.0.12",
     "co": "^4.6.0",
     "lodash": "^4.14.1",
     "mongodb": "^2.1.18",

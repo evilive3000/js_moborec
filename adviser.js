@@ -5,15 +5,14 @@ const events = require('./event_types');
 function pairId(eventA, eventB) {
   const [a, b] = [eventA[1], eventB[1]];
   return a < b ? `${a}:${b}` : `${b}:${a}`;
-  // return a < b ? [a, b] : [b, a];
 }
 
 function pairVal(eventA, eventB) {
   return events[eventA[2]] * events[eventB[2]];
 }
 
-function itemVal(eventA) {
-  return events[eventA[2]] * events[eventA[2]];
+function itemVal(event) {
+  return events[event[2]] * events[event[2]];
 }
 
 class Adviser {
@@ -23,7 +22,20 @@ class Adviser {
    */
   constructor(provider) {
     this.storage = provider;
-    this.counter = 0;
+    this.eventsCount = 0;
+    this.recomsCount = 0;
+  }
+
+  /**
+   *
+   * @param item
+   * @param threshold
+   * @param limit
+   * @returns {*}
+   */
+  recomByItem(item, threshold, limit) {
+    this.recomsCount++;
+    return this.storage.getSimilar(item, threshold, limit)
   }
 
   /**
@@ -35,7 +47,7 @@ class Adviser {
    * @returns {*}
    */
   addEvent(user, item, type, date) {
-    this.counter++;
+    this.eventsCount++;
     const storage = this.storage;
     date || (date = new Date());
     return co(function*() {
@@ -43,6 +55,21 @@ class Adviser {
       const history = new History(storage, user, events);
       const delta = history.add([date, item, type]);
       storage.increment(delta);
+    });
+  }
+
+  /**
+   *
+   */
+  getStats() {
+    return Promise.resolve({
+      memory: process.memoryUsage(),
+      histo: this.storage.histo(),
+      calls: {
+        events: this.eventsCount,
+        recoms: this.recomsCount
+      },
+      cache: this.storage.cacheStats()
     });
   }
 }
@@ -56,25 +83,27 @@ class History {
     this.user = user;
     this.events = events || [];
     this.radius = {
-      limit: 5,
-      age: 7 * 24 * 60 * 60 * 1000
+      limit: 7,
+      age: 30 * 24 * 60 * 60 * 1000
     }
   }
 
   add(event) {
+    const updateOnly = this.events.length > 500;
     const evs = this.events;
     let index = _.findLastIndex(evs, {1: event[1]});
     let oldEvent = evs[index] && (evs[index][1] == event[1]) ? _.clone(evs[index]) : null;
 
     if (oldEvent) {
-      if (!this.shouldReplaceEvent(oldEvent, event)) return [];
+      if (!this.shouldReplaceEvent(oldEvent, event)) return {};
       evs[index][2] = event[2];
       event[0] = evs[index][0];
-      this.storage.setEvent(this.user, index, event);
+      this.storage.setEvent(this.user, event, index);
     } else {
+      if (updateOnly) return {};
       evs.push(event);
       index = evs.length - 1;
-      this.storage.pushEvent(this.user, event);
+      this.storage.setEvent(this.user, event);
     }
 
     const interact = this.getInteracted(index);

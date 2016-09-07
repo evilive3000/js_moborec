@@ -1,79 +1,89 @@
 "use strict";
 
-// const validator = require('./validation').validator;
+const validator = require('./validation').validator;
 
-var redis = require("redis"),
-  client = redis.createClient({
-    host: "redis",
-    // prefix: "recom-",
-    db: 2,
-    detect_buffers: true
-  });
+var client = require("redis").createClient({
+  host: "redis",
+  db: 4,
+  detect_buffers: true
+  // prefix: "recom-"
+});
 
-const Provider = require('./data_provider');
+const Provider = require('./provider/data');
+const provider = new Provider(client);
+
 const Adviser = require('./adviser');
-const adviser = new Adviser(new Provider(client));
+const adviser = new Adviser(provider);
 
-const events = Object.keys(require('./event_types'));
+const eventtypes = require('./event_types');
 
-let count = 1000;
+const restify = require('restify');
+const server = restify.createServer({});
 
-function newevent(){
-  const user = Math.round(Math.random() * 4) + 1;
-  const item = Math.round(Math.random() * 39) + 1;
-  const type = events[Math.round(Math.random() * 2)];
-  return [user, item, type];
-}
+server.use(restify.bodyParser());
 
-(function run(){
-  if (--count <= 0) return;
-  adviser.addEvent(...newevent()).then(run);
-})();
+/**
+ * Статистика
+ */
+server.get('/stats', (req, res, next) => {
+  adviser.getStats().then(stats => {
+    res.send(stats);
+    next();
+  });
+});
 
-// adviser.addEvent(1, 3, 'download');
+/**
+ * Список событий которые понимает система
+ */
+server.get('/events', (req, res, next) => {
+  res.send(eventtypes);
+  next();
+});
 
-// adviser.addEvent(1, 4, 'download');
-// adviser.addEvent(1, 3, 'vote_up');
-// adviser.addEvent(1, 6, 'download');
-// console.log();
+/**
+ * Получить список рекомендаций
+ */
+server.get('/recom/:oid', (req, res, next) => {
+  req.params.oid && (req.params.oid = parseInt(req.params.oid, 10));
+  if (!validator.validate('get_recom', req.params)) {
+    return next(new restify.UnprocessableEntityError(validator.errorsText()));
+  }
+  adviser
+    .recomByItem(req.params.oid, 0.001, 20)
+    .then(result => {
+      res.send(result);
+      next();
+    });
+});
 
+server.get('/recomlist/:uid', (req, res, next) => {
+  if (!validator.validate('get_recomlist', req.params)) {
+    return next(new restify.UnprocessableEntityError(validator.errorsText()));
+  }
+  // adviser.recomByUserlist(req.params.uid, 20)
+  //   .then(result => {
+  //     res.send(result);
+  //     next();
+  //   });
+  res.send([]);
+  next();
+});
 
-// const restify = require('restify');
-// const server = restify.createServer({});
-//
-// server.use(restify.bodyParser());
-//
-// server.get('/stats', (req, res, next) => {
-//   res.send('stats');
-//   next();
-// });
-//
-//
-// server.get('/events', (req, res, next) => {
-//   res.send('events');
-//   next();
-// });
-//
-//
-// server.get('/recom/:oid', (req, res, next) => {
-//   req.params.oid && (req.params.oid = parseInt(req.params.oid, 10));
-//   if (!validator.validate('get_recom', req.params)) {
-//     return next(new restify.UnprocessableEntityError(validator.errorsText()));
-//   }
-//   res.send('recom:' + req.params.oid);
-//   next();
-// });
-//
-//
-// server.post('/event', (req, res, next) => {
-//   if (!validator.validate('post_event', req.params)) {
-//     return next(new restify.UnprocessableEntityError(validator.errorsText()));
-//   }
-//   res.send(req.params);
-//   next();
-// });
-//
-//
-// server.listen(8088, function () {
-//   console.log('%s listening at %s', server.name, server.url);
-// });
+/**
+ * Добавление события
+ */
+server.post('/event', (req, res, next) => {
+  if (!validator.validate('post_event', req.params)) {
+    return next(new restify.UnprocessableEntityError(validator.errorsText()));
+  }
+  const {uid, oid, event} = req.params;
+  adviser.addEvent(uid, oid, event).catch(err => console.log(err));
+  res.send("OK");
+  next();
+});
+
+provider.start().then(() => {
+  server.listen(8084, () => {
+    console.log('%s listening at %s', server.name, server.url);
+  });
+}).catch(e => console.log(e));
