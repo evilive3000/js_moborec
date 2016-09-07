@@ -49,6 +49,7 @@ server.get('/recom/:oid', (req, res, next) => {
   adviser
     .recomByItem(req.params.oid, 0.001, 20)
     .then(result => {
+      console.log(`recom: ${req.params.oid }`);
       res.send(result);
       next();
     });
@@ -76,6 +77,7 @@ server.post('/event', (req, res, next) => {
   }
   const {uid, oid, event} = req.params;
   adviser.addEvent(uid, oid, event).catch(err => console.log(err));
+  console.log(`event: {user: ${uid}, item: ${oid}, event: ${event}`);
   res.send("OK");
   next();
 });
