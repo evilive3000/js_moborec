@@ -49,12 +49,15 @@ server.get('/recom/:oid', (req, res, next) => {
   adviser
     .recomByItem(req.params.oid, 0.001, 20)
     .then(result => {
-      console.log(`recom: ${req.params.oid }`);
+      devMode && console.log(`recom: ${req.params.oid }`);
       res.send(result);
       next();
     });
 });
 
+/**
+ * 
+ */
 server.get('/recomlist/:uid', (req, res, next) => {
   if (!validator.validate('get_recomlist', req.params)) {
     return next(new restify.UnprocessableEntityError(validator.errorsText()));
@@ -77,11 +80,14 @@ server.post('/event', (req, res, next) => {
   }
   const {uid, oid, event} = req.params;
   adviser.addEvent(uid, oid, event).catch(err => console.log(err));
-  console.log(`event: {user: ${uid}, item: ${oid}, event: ${event}`);
+  devMode && console.log(`event: {user: ${uid}, item: ${oid}, event: ${event}}`);
   res.send("OK");
   next();
 });
 
+/**
+ * Сука старт!
+ */
 provider.start().then(() => {
   server.listen(config.app.port, () => {
     console.log('%s listening at %s', server.name, server.url);

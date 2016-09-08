@@ -1,0 +1,138 @@
+#!/usr/bin/env node
+
+const devMode = process.env.DEV || false;
+const config = require(`../config.json`)[devMode ? 'dev' : 'prod'];
+
+const [,port] = process.argv[1].split('_');
+const host = 'localhost';
+const http = require('http');
+
+const url = `http://${host}:${port}/stats`;
+
+function writeln(str) {
+  process.stdout.write(str + "\n");
+}
+
+function readStats(callback) {
+  http.get(url, res => {
+    let body = '';
+    res.on('data', chunk => body += chunk);
+    res.on('end', () => {
+      try {
+        callback(null, JSON.parse(body));
+      } catch (e) {
+        callback(e);
+      }
+    });
+  }).on('error', callback);
+}
+
+const munin = [
+  {
+    _id: "moborec_app_memory",
+    category: "Moborec",
+    title: "App memory",
+    args: "--base 1024 --lower-limit 0",
+    _defs: {
+      max: "3221225472",
+      cdef: "mem,1024,*",
+      type: "GAUGE",
+      draw: "AREA"
+    },
+    _graphs: [
+      {_id: "memrss", label: "rss"},
+      {_id: "memtotal", label: "heap total"},
+      {_id: "memused", label: "heap used"}
+    ]
+  },
+
+  {
+    _id: "moborec_api_calls",
+    category: "Moborec",
+    title: "API Calls",
+    args: "--base 1000 --lower-limit 0",
+    _defs: {
+      max: "10000",
+      type: "COUNTER",
+      draw: "LINE2"
+    },
+    _graphs: [
+      {_id: "apievents", label: "events"},
+      {_id: "apirecoms", label: "recoms"}
+    ]
+  },
+
+  {
+    _id: "moborec_coverage_2",
+    category: "Moborec",
+    title: "Stats coverage",
+    args: "--base 1000 --lower-limit 0",
+    _defs: {
+      max: "30000",
+      type: "GAUGE",
+      draw: "STACK"
+    },
+    _graphs: [
+      // {_id: "pair500", label: "500+", draw: "AREA"},
+      // {_id: "pair250_499", label: "250...499"}
+    ]
+  }
+];
+
+function printKeys(data, prefix) {
+  for (const key of Object.keys(data)) {
+    if (key.startsWith('_')) continue;
+    writeln(`${prefix}${key} ${data[key]}`);
+  }
+}
+
+function printMultigraph(data) {
+  writeln(`multigraph ${data._id}`);
+  printKeys(data, 'graph_');
+  data._graphs.forEach(
+    graph => printKeys(Object.assign({}, data._defs, graph), graph._id + ".")
+  );
+}
+
+function irange(base, i) {
+  return `${~~Math.pow(base, i - 1) + 1}...${~~Math.pow(base, i)}`
+}
+
+/**
+ *  CONFIG
+ */
+function getConfig() {
+  readStats((error, stats) => {
+    const graph = munin.find(g => g._id == 'moborec_coverage_2');
+    graph._graphs = Object.keys(stats.histo.vals).sort().reverse()
+      .map(i => ({_id: `pair_${i}`, label: irange(stats.histo.base, i)}));
+    // первая полоса рисуется ареей, остальные накладываются сверху.
+    graph._graphs[0].draw = "AREA";
+    munin.forEach(printMultigraph);
+  });
+}
+
+/**
+ *  RUN
+ */
+function run() {
+  readStats((error, stats) => {
+    process.stdout.write(`
+multigraph moborec_app_memory
+memrss.value ${stats.memory.rss}
+memtotal.value ${stats.memory.heapTotal}
+memused.value ${stats.memory.heapUsed}
+
+multigraph moborec_api_calls
+apievents.value ${stats.calls.events}
+apirecoms.value ${stats.calls.recoms}
+
+multigraph moborec_coverage_2
+`);
+
+    Object.keys(stats.histo.vals)
+      .forEach(key => writeln(`pair_${key}.value ${stats.histo.vals[key]}`));
+  });
+}
+
+process.argv[process.argv.length - 1] == 'config' ? getConfig() : run();

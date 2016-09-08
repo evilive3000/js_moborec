@@ -148,7 +148,6 @@ class CacheProvider {
   }
 
   /**
-   *
    * @returns {boolean}
    */
   isTimeToPersist() {
@@ -163,11 +162,12 @@ class CacheProvider {
     const {historyCommands, incrby, lastEventDate} = this;
     this.historyCommands = [];
     this.incrby = {};
+    const datestr = (new Date).toLocaleTimeString();
+    console.log(`${datestr} persist: {commands:${historyCommands.length}, incrby: ${_.size(incrby)}`);
 
-    const commands = [].concat(
+    const commands = [['SET', 'lastEventDate', +lastEventDate]].concat(
       historyCommands,
-      _.map(incrby, (val, key) => ['INCRBY', `c:${key}`, val]),
-      [['SET', 'lastEventDate', +lastEventDate]]
+      _.map(incrby, (val, key) => ['INCRBY', `c:${key}`, val])
     );
 
     return new Promise((resolve, reject) => {
