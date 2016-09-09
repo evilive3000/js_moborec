@@ -3,7 +3,7 @@
 const devMode = process.env.DEV || false;
 const config = require(`../config.json`)[devMode ? 'dev' : 'prod'];
 
-const [,port] = process.argv[1].split('_');
+const port = process.argv[1].split('_').pop();
 const host = 'localhost';
 const http = require('http');
 
