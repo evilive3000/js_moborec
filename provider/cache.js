@@ -28,7 +28,7 @@ class CacheProvider {
     this.incrby = {};
     // минимальное количество пар для того чтобы начать считать статитсику для этих игр
     this.threashold = 10;
-    this.lastEventDate = null;
+    this.lastPersist = Date.now();
   }
 
   /**
@@ -40,15 +40,17 @@ class CacheProvider {
     const provider = this;
 
     return co(function*() {
-      const keys = yield provider.loadKeys('r:*');
-      const ids = keys.map(k => parseInt(k.split(':')[1], 10));
-      const [scores, counts] = yield [provider.loadRatings(keys), provider.loadCounts(ids)];
+      const ids = _.range(1, 25000);
+      const [scores, counts] = yield [provider.loadRatings(ids), provider.loadCounts(ids)];
 
       for (let i = 0; i < ids.length; i++) {
-        items[ids[i]] = {
+        const doc = {
           r: _.chunk(scores[i].map(parseFloat), 2),
-          c: parseInt(counts[i], 10)
+          c: parseInt(counts[i] || 0, 10)
         };
+        if (doc.r.length > 0 || doc.c != 0) {
+          items[ids[i]] = doc;
+        }
       }
 
       return provider;
@@ -102,24 +104,13 @@ class CacheProvider {
 
   /**
    *
-   * @param patter
+   * @param ids
    * @returns {Promise}
    */
-  loadKeys(patter) {
-    return new Promise((resolve, reject) => {
-      this.redis.keys(patter, promisify(resolve, reject));
-    });
-  }
-
-  /**
-   *
-   * @param keys
-   * @returns {Promise}
-   */
-  loadRatings(keys) {
+  loadRatings(ids) {
     return new Promise((resolve, reject) => {
       this.redis
-        .batch(keys.map(k => ['ZRANGE', k, 0, -1, 'WITHSCORES']))
+        .batch(ids.map(i => ['ZRANGE', 'r:' + i, 0, -1, 'WITHSCORES']))
         .exec(promisify(resolve, reject));
     });
   }
@@ -132,7 +123,7 @@ class CacheProvider {
   loadCounts(ids) {
     return _.isEmpty(ids)
       ? Promise.resolve([])
-      : new Promise((resolve, reject) => this.redis.mget(ids, promisify(resolve, reject)));
+      : new Promise((resolve, reject) => this.redis.mget(ids.map(i => 'c:' + i), promisify(resolve, reject)));
   }
 
   /**
@@ -143,7 +134,10 @@ class CacheProvider {
     const base = Math.sqrt(10);
     return {
       base,
-      vals: _.countBy(this.items, d => Math.ceil(Math.log(d.r.length) / Math.log(base)))
+      vals: _.countBy(this.items, d => {
+        const l = d.r.length;
+        return l > 0 ? Math.ceil(Math.log(l) / Math.log(base)) : 0;
+      })
     };
   }
 
@@ -151,7 +145,7 @@ class CacheProvider {
    * @returns {boolean}
    */
   isTimeToPersist() {
-    return (Date.now() - this.lastEventDate > 30 * 1000) || (this.historyCommands.length > 30000);
+    return ((Date.now() - this.lastPersist) > 30 * 1000) || (this.historyCommands.length > 5000);
   }
 
   /**
@@ -159,20 +153,31 @@ class CacheProvider {
    * @returns {Promise}
    */
   persist() {
-    const {historyCommands, incrby, lastEventDate} = this;
+    if (this.persisting)
+      return this.persisting;
+
+    this.lastPersist = new Date;
+    const {historyCommands, incrby} = this;
     this.historyCommands = [];
     this.incrby = {};
-    const datestr = (new Date).toLocaleTimeString();
-    console.log(`${datestr} persist: {commands:${historyCommands.length}, incrby: ${_.size(incrby)}`);
 
-    const commands = [['SET', 'lastEventDate', +lastEventDate]].concat(
+    const commands = [].concat(
       historyCommands,
       _.map(incrby, (val, key) => ['INCRBY', `c:${key}`, val])
     );
 
-    return new Promise((resolve, reject) => {
+    if (commands.length == 0) {
+      delete this.persisting;
+      return Promise.resolve();
+    }
+    
+    const datestr = (new Date).toLocaleTimeString();
+    console.log(`${datestr} persist: {commands:${historyCommands.length}, incrby: ${_.size(incrby)}}`);
+
+    return this.persisting = new Promise((resolve, reject) => {
       this.redis.batch(commands).exec(promisify(resolve, reject));
-    }).then(() => this.updateRecommendations(_.keys(incrby)));
+    }).then(() => this.updateRecommendations(_.keys(incrby)))
+      .then(() => delete this.persisting, () => delete this.persisting);
   }
 
   /**

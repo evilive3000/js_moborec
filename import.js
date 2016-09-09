@@ -12,9 +12,9 @@ const redis = require("redis"),
   client = redis.createClient(config.redis);
 
 const Provider = require('./provider/data');
+const provider = new Provider(client);
 const Adviser = require('./adviser');
-const adviser = new Adviser(new Provider(client));
-const events = Object.keys(require('./event_types'));
+const adviser = new Adviser(provider);
 
 let counter = 0;
 let lastcount = 0;
@@ -24,6 +24,7 @@ const delay = 10000;
 (function printtime() {
   const date = new Date();
   console.log(`${date.toLocaleTimeString()}: ${(counter - lastcount) / delay * 1000} docs/sec [${counter}, ${lastid}]`);
+  console.log(adviser.getStats());
   lastcount = counter;
   setTimeout(printtime, delay)
 })();
@@ -39,6 +40,7 @@ function getLastId() {
 
 
 co(function*() {
+  yield provider.start();
   const id = yield getLastId();
   const db = yield MongoClient.connect("mongodb://136.243.12.83:27017/mob");
   const coll = db.collection("user_downloads");

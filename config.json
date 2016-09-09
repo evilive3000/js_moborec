@@ -16,7 +16,7 @@
   "dev": {
     "redis": {
       "host": "redis",
-      "db": 4,
+      "db": 5,
       "detect_buffers": true
     },
     "app": {
