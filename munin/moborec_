@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+"use strict";
+
 const {DEV, HOST, PORT} = process.env;
 const devMode = DEV || false;
 const config = require(`../config.json`)[devMode ? 'dev' : 'prod'];
@@ -36,14 +38,13 @@ const munin = [
     args: "--base 1024 --lower-limit 0",
     _defs: {
       max: "3221225472",
-      cdef: "mem,1024,*",
       type: "GAUGE",
       draw: "AREA"
     },
     _graphs: [
-      {_id: "memrss", label: "rss"},
-      {_id: "memtotal", label: "heap total"},
-      {_id: "memused", label: "heap used"}
+      {_id: "memrss", label: "rss", cdef: "memrss,1024,*"},
+      {_id: "memtotal", label: "heap total", cdef: "memtotal,1024,*"},
+      {_id: "memused", label: "heap used", cdef: "memused,1024,*"}
     ]
   },
 
