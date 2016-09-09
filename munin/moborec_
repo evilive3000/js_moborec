@@ -42,9 +42,9 @@ const munin = [
       draw: "AREA"
     },
     _graphs: [
-      {_id: "memrss", label: "rss", cdef: "memrss,1024,*"},
-      {_id: "memtotal", label: "heap total", cdef: "memtotal,1024,*"},
-      {_id: "memused", label: "heap used", cdef: "memused,1024,*"}
+      {_id: "memrss", label: "rss"},
+      {_id: "memtotal", label: "heap total"},
+      {_id: "memused", label: "heap used"}
     ]
   },
 
