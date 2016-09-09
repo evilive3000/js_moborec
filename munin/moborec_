@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-const devMode = process.env.DEV || false;
+const {DEV, HOST, PORT} = process.env;
+const devMode = DEV || false;
 const config = require(`../config.json`)[devMode ? 'dev' : 'prod'];
 
-const port = process.argv[1].split('_').pop();
-const host = 'localhost';
+const port = parseInt(process.argv[1].split('_').pop()) || PORT;
+const host = HOST;
 const http = require('http');
 
 const url = `http://${host}:${port}/stats`;
