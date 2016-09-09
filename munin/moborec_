@@ -97,7 +97,9 @@ function printMultigraph(data) {
 }
 
 function irange(base, i) {
-  return `${~~Math.pow(base, i - 1) + 1}...${~~Math.pow(base, i)}`
+  const from = i ? ~~Math.pow(base, i - 1) + 1 : 0;
+  const to = i ? ~~Math.pow(base, i) : 0;
+  return from == to ? `${from}` : `${from}...${to}`;
 }
 
 /**
