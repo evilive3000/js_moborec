@@ -136,7 +136,7 @@ class CacheProvider {
       base,
       vals: _.countBy(this.items, d => {
         const l = d.r.length;
-        return l > 0 ? Math.ceil(Math.log(l) / Math.log(base)) : 0;
+        return l > 0 ? Math.ceil(Math.log(l) / Math.log(base)) : -1;
       })
     };
   }
