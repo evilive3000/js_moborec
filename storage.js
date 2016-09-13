@@ -152,24 +152,22 @@ function scoreUpdate(A, B, sim) {
   return update;
 }
 
-
-function validate(redis) {
-  return new Promise((resolve, reject) => {
-    const ids = _.reduce(items, (prev, curr, id) => Object.assign(prev, {[id]: curr.c}), {});
-
-    redis.mget(_.keys(ids).map(id => `c:${id}`), function (err, result) {
-      const data = _.zipObject(_.keys(ids), result);
-      console.log('====================');
-      for(const id of _.keys(ids)){
-        if (ids[id] - data[id] != 0) {
-          console.log(id, ids[id], data[id]);
-        }
-      }
-      console.log('--------------------');
-    });
-  });
-}
-
+// function validate(redis) {
+//   return new Promise((resolve, reject) => {
+//     const ids = _.reduce(items, (prev, curr, id) => Object.assign(prev, {[id]: curr.c}), {});
+//
+//     redis.mget(_.keys(ids).map(id => `c:${id}`), function (err, result) {
+//       const data = _.zipObject(_.keys(ids), result);
+//       console.log('====================');
+//       for (const id of _.keys(ids)) {
+//         if (ids[id] - data[id] != 0) {
+//           console.log(id, ids[id], data[id]);
+//         }
+//       }
+//       console.log('--------------------');
+//     });
+//   });
+// }
 
 class Storage {
   constructor(redis) {

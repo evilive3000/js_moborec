@@ -15,7 +15,7 @@
 
   "dev": {
     "redis": {
-      "host": "redis",
+      "host": "redis.tidido",
       "db": 5,
       "detect_buffers": true
     },
