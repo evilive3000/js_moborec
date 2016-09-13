@@ -54,7 +54,7 @@ const munin = [
     title: "API Calls",
     args: "--base 1000 --lower-limit 0",
     _defs: {
-      max: "10000",
+      max: "1000",
       type: "COUNTER",
       draw: "LINE2"
     },
@@ -72,7 +72,7 @@ const munin = [
     args: "--base 1000 --lower-limit 0",
     _defs: {
       max: "1000",
-      type: "GAUGE"
+      type: "COUNTER"
     },
     _graphs: [
       {_id: "cachemiss", label: "misses", draw: "AREA"},
