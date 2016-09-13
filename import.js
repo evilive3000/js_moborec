@@ -3,18 +3,19 @@
 const co = require('co');
 const mongo = require('mongodb');
 const MongoClient = mongo.MongoClient;
-const ObjectId = mongo.ObjectID;
+// const ObjectId = mongo.ObjectID;
 
 const devMode = process.env.DEV || false;
-const config = require(`./config.json`)[devMode?'dev':'prod'];
+const config = require(`./config.json`)[devMode ? 'dev' : 'prod'];
 
 const redis = require("redis"),
   client = redis.createClient(config.redis);
 
-const Provider = require('./provider/data');
-const provider = new Provider(client);
+const Storage = require('./storage');
+const storage = new Storage(client);
+
 const Adviser = require('./adviser');
-const adviser = new Adviser(provider);
+const adviser = new Adviser(storage);
 
 let counter = 0;
 let lastcount = 0;
@@ -24,31 +25,28 @@ const delay = 10000;
 (function printtime() {
   const date = new Date();
   console.log(`${date.toLocaleTimeString()}: ${(counter - lastcount) / delay * 1000} docs/sec [${counter}, ${lastid}]`);
-  console.log(adviser.getStats());
+  adviser.getStats().then(stats => console.log(stats));
   lastcount = counter;
   setTimeout(printtime, delay)
 })();
 
-/**
- * @returns {Promise}
- */
-function getLastId() {
-  return new Promise((resolve, reject) => {
-    client.get('lastEventDate', (err, reply) => err ? reject(err) : resolve(reply));
-  }).then(microsec => new ObjectId(Math.floor((microsec || 9e11) / 1000).toString(16) + "0000000000000000"));
-}
-
-
 co(function*() {
-  yield provider.start();
-  const id = yield getLastId();
+  yield (new Promise(res => {
+    const seconds = 5;
+    console.log(`База редиса будет почищена через ${seconds} секунд`);
+    setTimeout(() => {
+      client.flushdb(res);
+    }, seconds * 1000);
+  })).catch(e => console.log(e));
+
+  yield storage.init();
+
   const db = yield MongoClient.connect("mongodb://136.243.12.83:27017/mob");
   const coll = db.collection("user_downloads");
-  // const id = ObjectId('57b4e0c52c35ba012f8b6ff5');
   const cursor = coll
-    .find({_id: {$gt: id/*, $lt: new ObjectId("56fc3b31c5ea522a1a8b458b")*/}, type: "android"})
-    .skip(0)
-    // .limit(1000000)
+    .find({type: "android"})
+    .skip(1000000)
+    .limit(0)
     .sort({_id: 1});
 
   // Iterate over the cursor

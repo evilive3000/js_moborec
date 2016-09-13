@@ -1,17 +1,17 @@
 "use strict";
 
 const devMode = process.env.DEV || false;
-const config = require(`./config.json`)[devMode?'dev':'prod'];
+const config = require(`./config.json`)[devMode ? 'dev' : 'prod'];
 
 const validator = require('./validation').validator;
 
 const client = require("redis").createClient(config.redis);
 
-const Provider = require('./provider/data');
-const provider = new Provider(client);
+const Storage = require('./storage');
+const storage = new Storage(client);
 
 const Adviser = require('./adviser');
-const adviser = new Adviser(provider);
+const adviser = new Adviser(storage);
 
 const eventtypes = require('./event_types');
 
@@ -47,7 +47,7 @@ server.get('/recom/:oid', (req, res, next) => {
     return next(new restify.UnprocessableEntityError(validator.errorsText()));
   }
   adviser
-    .recomByItem(req.params.oid, 0.001, 20)
+    .recomByItem(req.params.oid, 20)
     .then(result => {
       devMode && console.log(`recom: ${req.params.oid }`);
       res.send(result);
@@ -56,19 +56,17 @@ server.get('/recom/:oid', (req, res, next) => {
 });
 
 /**
- * 
+ *
  */
 server.get('/recomlist/:uid', (req, res, next) => {
   if (!validator.validate('get_recomlist', req.params)) {
     return next(new restify.UnprocessableEntityError(validator.errorsText()));
   }
-  // adviser.recomByUserlist(req.params.uid, 20)
-  //   .then(result => {
-  //     res.send(result);
-  //     next();
-  //   });
-  res.send([]);
-  next();
+  adviser.recomByList(req.params.uid, 20)
+    .then(result => {
+      res.send(result);
+      next();
+    });
 });
 
 /**
@@ -88,7 +86,7 @@ server.post('/event', (req, res, next) => {
 /**
  * Сука старт!
  */
-provider.start().then(() => {
+storage.init().then(() => {
   server.listen(config.app.port, () => {
     console.log('%s listening at %s', server.name, server.url);
   });

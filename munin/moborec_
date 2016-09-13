@@ -7,7 +7,7 @@ const devMode = DEV || false;
 const config = require(`../config.json`)[devMode ? 'dev' : 'prod'];
 
 const port = parseInt(process.argv[1].split('_').pop()) || PORT;
-const host = HOST;
+const host = HOST || 'localhost';
 const http = require('http');
 
 const url = `http://${host}:${port}/stats`;
@@ -60,7 +60,23 @@ const munin = [
     },
     _graphs: [
       {_id: "apievents", label: "events"},
-      {_id: "apirecoms", label: "recoms"}
+      {_id: "apirecomitem", label: "recomitem"},
+      {_id: "apirecomlist", label: "recomlist"}
+    ]
+  },
+
+  {
+    _id: "moborec_lru_cache",
+    category: "Moborec",
+    title: "Cache stats",
+    agrs: "--base 1000 --lower-limit 0",
+    _defs: {
+      max: "1000",
+      type: "GAUGE"
+    },
+    _graphs: [
+      {_id: "cachemiss", label: "misses", draw: "AREA"},
+      {_id: "cachehit", label: "hits", draw: "STACK"}
     ]
   },
 
@@ -111,7 +127,9 @@ function getConfig() {
     graph._graphs = Object.keys(stats.histo.vals).sort().reverse()
       .map(i => ({_id: `pair_${i}`, label: irange(stats.histo.base, i)}));
     // первая полоса рисуется ареей, остальные накладываются сверху.
-    graph._graphs[0].draw = "AREA";
+    if (graph._graphs.length > 0) {
+      graph._graphs[0].draw = "AREA";
+    }
     munin.forEach(printMultigraph);
   });
 }
@@ -128,8 +146,13 @@ memtotal.value ${stats.memory.heapTotal}
 memused.value ${stats.memory.heapUsed}
 
 multigraph moborec_api_calls
-apievents.value ${stats.calls.events}
-apirecoms.value ${stats.calls.recoms}
+apievents.value ${stats.counter.events}
+apirecoms.value ${stats.counter.recomitem}
+apirecoms.value ${stats.counter.recomlist}
+
+multigraph moborec_lru_cache
+cachehit.value ${stats.counter.cachehit}
+cachemiss.value ${stats.counter.cachemiss}
 
 multigraph moborec_coverage_2
 `);
