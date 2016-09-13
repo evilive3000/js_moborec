@@ -147,8 +147,8 @@ memused.value ${stats.memory.heapUsed}
 
 multigraph moborec_api_calls
 apievents.value ${stats.counter.events}
-apirecoms.value ${stats.counter.recomitem}
-apirecoms.value ${stats.counter.recomlist}
+apirecomitem.value ${stats.counter.recomitem}
+apirecomlist.value ${stats.counter.recomlist}
 
 multigraph moborec_lru_cache
 cachehit.value ${stats.counter.cachehit}

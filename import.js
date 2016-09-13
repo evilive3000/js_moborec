@@ -24,7 +24,7 @@ const delay = 10000;
 
 (function printtime() {
   const date = new Date();
-  console.log(`${date.toLocaleTimeString()}: ${(counter - lastcount) / delay * 1000} docs/sec [${counter}, ${lastid}]`);
+  console.log(`\n${date.toLocaleTimeString()}: ${(counter - lastcount) / delay * 1000} docs/sec [${counter}, ${lastid}]\n`);
   adviser.getStats().then(stats => console.log(stats));
   lastcount = counter;
   setTimeout(printtime, delay)
