@@ -46,7 +46,7 @@ co(function*() {
   const cursor = coll
     .find({type: "android"})
     .skip(1000000)
-    .limit(0)
+    .limit(500000)
     .sort({_id: 1});
 
   // Iterate over the cursor

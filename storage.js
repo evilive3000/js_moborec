@@ -104,7 +104,7 @@ function updateRecommendations(redis, ids) {
       const data = _.zipObject(ids, vals);
       const commands = [];
       for (const pair of ids) {
-        const [a, b] = pair.split(':');
+        const [a, b] = pair.split(':').map(v => parseInt(v, 10));
         if (_.isUndefined(b)) continue; // счетчик игры, а не пары.
 
         if (!items[a] || !items[b]) {
@@ -128,9 +128,9 @@ function updateRecommendations(redis, ids) {
 
 /**
  *
- * @param A
- * @param B
- * @param sim
+ * @param {Number} A
+ * @param {Number} B
+ * @param {Number} sim
  * @returns {Array}
  */
 function scoreUpdate(A, B, sim) {

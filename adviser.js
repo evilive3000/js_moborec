@@ -66,9 +66,8 @@ class Adviser {
    * @param date
    * @returns {*}
    */
-  addEvent(user, item, type, date) {
+  addEvent(user, item, type, date = new Date) {
     const adviser = this;
-    date || (date = new Date());
     return co(function*() {
       const history = yield adviser.getHistory(user);
       if (!history.overflowed()) {
@@ -118,30 +117,30 @@ module.exports = Adviser;
 
 // getRecomlist(user, limit) {
 //   return Promise.resolve([]);
-  // const provider = this;
-  // return co(function*() {
-  //
-  //   const story = _.keyBy(yield provider.getEvents(user), 1);
-  //   const without = new Set(_.map(story, 1));
-  //
-  //   // не учтен личный опыт пользователя
-  //   // надо учитывает проставленный рейтинг
-  //   const sims = {};
-  //   for (const id of without) {
-  //     if (provider.cache.items[id]) {
-  //       const r = provider.cache.items[id].r;
-  //       let i = r.length;
-  //       while (i-- && r[i][1] > 0.009) {
-  //         const [g, sim] = r[i];
-  //         sims[g] = sims[g] ? [g, Math.max(sims[g][1], sim)] : [g, sim];
-  //       }
-  //     }
-  //   }
-  //
-  //   return _(sims)
-  //     .orderBy(1, 'desc')
-  //     .take(limit)
-  //     .value();
-  //
-  // }).catch(e => console.log(e))
+// const provider = this;
+// return co(function*() {
+//
+//   const story = _.keyBy(yield provider.getEvents(user), 1);
+//   const without = new Set(_.map(story, 1));
+//
+//   // не учтен личный опыт пользователя
+//   // надо учитывает проставленный рейтинг
+//   const sims = {};
+//   for (const id of without) {
+//     if (provider.cache.items[id]) {
+//       const r = provider.cache.items[id].r;
+//       let i = r.length;
+//       while (i-- && r[i][1] > 0.009) {
+//         const [g, sim] = r[i];
+//         sims[g] = sims[g] ? [g, Math.max(sims[g][1], sim)] : [g, sim];
+//       }
+//     }
+//   }
+//
+//   return _(sims)
+//     .orderBy(1, 'desc')
+//     .take(limit)
+//     .value();
+//
+// }).catch(e => console.log(e))
 // }

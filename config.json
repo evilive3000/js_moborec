@@ -2,7 +2,7 @@
   "prod": {
     "redis": {
       "host": "127.0.0.1",
-      "db": 4,
+      "db": 5,
       "detect_buffers": true
     },
     "app": {
