@@ -19,23 +19,35 @@ function pairId(eventA, eventB) {
   return a < b ? `${a}:${b}` : `${b}:${a}`;
 }
 
-function pairVal(eA, eB, eOld) {
+function pairVal(eA, eB, eOld = null) {
   const vOld = _.isNull(eOld) ? 0 : events[eOld[2]];
   return events[eA[2]] * (events[eB[2]] - vOld);
 }
 
-function itemVal(e, eOld) {
+function itemVal(e, eOld = null) {
   const vOld = _.isNull(eOld) ? 0 : Math.pow(events[eOld[2]], 2);
   return Math.pow(events[e[2]], 2) - vOld;
 }
 
 
 class History {
-
   constructor(user, events = []) {
     this.user = user;
     this.events = events;
     this.index = events.reduce((prev, curr, i) => Object.assign(prev, {[curr[1]]: i}), {});
+  }
+
+  destroy() {
+    const result = {pairs: [], items: []};
+    // console.log(this);
+    while (this.events.length) {
+      const interact = this.getInteracted(0);
+      const A = this.events.shift();
+      _.each(interact, B => result.pairs.push([pairId(A, B), -pairVal(A, B)]));
+      result.items.push([A[1], -itemVal(A)]);
+    }
+    // console.log(result);
+    return result;
   }
 
   /**

@@ -2,7 +2,7 @@
   "prod": {
     "redis": {
       "host": "127.0.0.1",
-      "db": 5,
+      "db": 2,
       "detect_buffers": true
     },
     "app": {
@@ -16,7 +16,7 @@
   "dev": {
     "redis": {
       "host": "redis.tidido",
-      "db": 5,
+      "db": 2,
       "detect_buffers": true
     },
     "app": {
