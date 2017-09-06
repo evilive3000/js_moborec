@@ -15,6 +15,8 @@ const MIN_VECTOR_LENGTH = 10;
 const MIN_SIMILARITY = 0.005;
 const PERSIST_DELAY = 15000;
 
+const debug = require('debug')('moborec');
+
 /**
  *
  * @param redis
@@ -100,6 +102,7 @@ class Storage {
   }
 
   init() {
+    debug('Init storage');
     const self = this;
     return co(function*() {
       const ids = _.range(1, 25000);

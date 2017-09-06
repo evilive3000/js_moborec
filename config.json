@@ -6,7 +6,8 @@
       "detect_buffers": true
     },
     "app": {
-      "port": 8084
+      "port": 8084,
+      "limit": 100
     },
     "cache": {
       "lenLRU": 50000
@@ -20,7 +21,8 @@
       "detect_buffers": true
     },
     "app": {
-      "port": 8084
+      "port": 8084,
+      "limit": 100
     },
     "cache": {
       "lenLRU": 50000

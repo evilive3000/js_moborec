@@ -18,6 +18,8 @@ const eventtypes = require('./event_types');
 const restify = require('restify');
 const server = restify.createServer({});
 
+const debug = require('debug')('moborec');
+
 server.use(restify.bodyParser());
 
 /**
@@ -47,12 +49,11 @@ server.get('/recom/:oid', (req, res, next) => {
     return next(new restify.UnprocessableEntityError(validator.errorsText()));
   }
   adviser
-    .recomByItem(req.params.oid, 20)
+    .recomByItem(req.params.oid, config.app.limit)
     .then(result => {
-      devMode && console.log(`recom: ${req.params.oid }`);
+      debug(`recom: ${req.params.oid }`);
       res.send(result);
-      next();
-    });
+    })
 });
 
 /**
@@ -62,11 +63,8 @@ server.get('/recomlist/:uid', (req, res, next) => {
   if (!validator.validate('get_recomlist', req.params)) {
     return next(new restify.UnprocessableEntityError(validator.errorsText()));
   }
-  adviser.recomByList(req.params.uid, 20)
-    .then(result => {
-      res.send(result);
-      next();
-    });
+  adviser.recomByList(req.params.uid, config.app.limit)
+    .then(result => res.send(result))
 });
 
 /**
@@ -76,9 +74,9 @@ server.post('/event', (req, res, next) => {
   if (!validator.validate('post_event', req.params)) {
     return next(new restify.UnprocessableEntityError(validator.errorsText()));
   }
-  const {uid, oid, event} = req.params;
+  const { uid, oid, event } = req.params;
   adviser.addEvent(uid, oid, event).catch(err => console.log(err));
-  devMode && console.log(`event: {user: ${uid}, item: ${oid}, event: ${event}}`);
+  debug(`event: {user: ${uid}, item: ${oid}, event: ${event}}`);
   res.send("OK");
   next();
 });
